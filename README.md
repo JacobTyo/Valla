@@ -52,6 +52,7 @@ The datasets currently supported are:
 
 This repository holds implementations of several popular Authorship Attribution and Verification methodologies,
 including some based on BERT, Siamese Models, Multi-Headed Language models, BiLSTMs, compression models, Ngrams, and more.
+After processing a raw dataset with the corresponding script, the dataset is ready for use with any of these models. 
 See each file in `valla/methods` for more information on the available methods. 
 
 ## Logging and Hyperparameter Tuning
