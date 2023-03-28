@@ -177,7 +177,7 @@ class ContrastiveEvaluator(SentenceEvaluator):
         self.triplet_dist_metric = triplet_dist_metric
         assert kernel_fn is not None, 'you must provide a kernel function to transform a distance into a similarity'
 
-    def __call__(self, model, output_path: str = None, epoch: int = -1, steps: int = -1, batch_size: int = -1) -> float:
+    def __call__(self, model, output_path: str = None, epoch: int = -1, steps: int = -1, batch_size: int = -1, threshold: float = 0.5, fitThreshold: bool = False):
         """
         This is called during training to evaluate the model.
         It returns a score for the evaluation with a higher score indicating a better result.
@@ -261,7 +261,7 @@ class ContrastiveEvaluator(SentenceEvaluator):
         overall_best_method = ''
         results = {}
         sims = {}
-
+        
         for sim, sim_name in [[avg_similarities, 'mean/'],
                               [med_similarities, 'median/'],
                               [fst_similarities, 'first/'],
@@ -271,14 +271,22 @@ class ContrastiveEvaluator(SentenceEvaluator):
                 f'{sim_name}similarity_max': np.max(sim),
                 f'{sim_name}similarity_mean': np.mean(sim),
                 f'{sim_name}similarity_std': np.std(sim),
-                f'{sim_name}similarity_median': np.median(sim)
+                f'{sim_name}similarity_median': np.median(sim),
             }
 
-            results.update(av_metrics(labels=truth, probas=sim, threshold=0.5, prefix=sim_name))
-            sims.update(sim_stats)
-
-        wandb.log(results)
-        wandb.log(sims)
+            #results.update(av_metrics(labels=truth, probas=sim, threshold=0.5, prefix=sim_name))
+            if fitThreshold:
+                threshold = sim.mean()
+                sims[f'{sim_name}threshold'] = np.median(sim)
+            else:
+                if isinstance(threshold, float):
+                    results.update(av_metrics(labels=truth, probas=sim, threshold=threshold, prefix=sim_name))
+                else:
+                    results.update(av_metrics(labels=truth, probas=sim, threshold=threshold[f'{sim_name}threshold'], prefix=sim_name))
+                sims.update(sim_stats)
+        if not fitThreshold:
+            wandb.log(results)
+            wandb.log(sims)
 
         model.train()
 
@@ -288,6 +296,7 @@ class ContrastiveEvaluator(SentenceEvaluator):
 
         if self.post_eval_callable is not None:
             self.post_eval_callable(model, self.triplet_dist_metric)
-
+        if fitThreshold:
+            return overall_best_auc, sims
         return overall_best_auc
 

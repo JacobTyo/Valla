@@ -231,7 +231,7 @@ def main():
     parser.add_argument('--evaluate_only', action='store_true')
     parser.add_argument('--true_hard_negatives', action='store_true')
     parser.add_argument('--triplet_margin', type=float, default=5)
-
+    parser.add_argument('--fit_threshold', action='store_true')
     args = parser.parse_args()
 
     # set the seeds
@@ -374,6 +374,23 @@ def main():
                   evaluator=evaluator,
                   evaluation_steps=args.evaluation_steps,
                   optimizer_params={'lr': args.lr, 'eps': args.eps, 'correct_bias': args.correct_bias},)
+        if fitThreshold and not args.AA:
+            threshold_finder = ContrastiveEvaluator(train_dataset,
+                                             batch_size=args.eval_batch_size,
+                                             distance_metric=contrastive_dist_metric,
+                                             triplet_dist_metric=triplet_dist_metric,
+                                             kernel_fn=kernel_fn,
+                                             post_eval_callable=post_eval_callable)
+            performance, threshold = threshold_finder(model=model,
+                                               epoch=0,  
+                                               steps=0,
+                                               batch_size=args.eval_batch_size,
+                                               fit_threshold=True)
+            performance = evaluator(model=model,
+                                  epoch=0,
+                                  steps=0,
+                                  batch_size=args.eval_batch_size,
+                                  threshold=threshold)
 
         logging.info('finished')
 
