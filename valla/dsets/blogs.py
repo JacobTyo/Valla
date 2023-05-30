@@ -1,4 +1,4 @@
-# Dataset Access: https://www.kaggle.com/datasets/rtatman/blog-authorship-corpus
+# Dataset Access: https://huggingface.co/datasets/blog_authorship_corpus/blob/main/blog_authorship_corpus.py
 from valla.utils.dataset_utils import finalize_dataset, list_dset_to_dict, auth_text_make_unique
 from sklearn.model_selection import train_test_split
 import logging
